@@ -1,59 +1,98 @@
 package com.mired.mired.controller;
 
+import com.mired.mired.dto.ApiResponse;
+import com.mired.mired.dto.AuthResponse;
+import com.mired.mired.dto.LoginRequest;
 import com.mired.mired.dto.UserDto;
 import com.mired.mired.model.Role;
 import com.mired.mired.model.User;
 import com.mired.mired.repository.UserRepository;
+import com.mired.mired.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 
-@Tag(name = "Autenticación", description = "Registro, login y logout de usuarios")
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    @Operation(summary = "Registro de usuario")
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody UserDto dto, HttpSession session) {
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body("El usuario ya está registrado");
+    public ResponseEntity<?> register(@RequestBody @Valid UserDto dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.builder().message("El correo ya está registrado.").build());
         }
 
         User user = new User();
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(dto.getRole() != null ? dto.getRole() : Role.USER);
-
         userRepository.save(user);
-        session.setAttribute("user", user);
-        return ResponseEntity.ok("Registro exitoso");
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+        );
+
+        String token = jwtService.generateToken(dto.getEmail());
+
+        return ResponseEntity.ok(
+                AuthResponse.builder()
+                        .token(token)
+                        .email(user.getEmail())
+                        .role(user.getRole().name())
+                        .build()
+        );
     }
 
-    @Operation(summary = "Login de usuario")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserDto dto, HttpSession session) {
-        User user = userRepository.findByEmail(dto.getEmail()).orElse(null);
-        if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(401).body("Credenciales inválidas");
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.builder().message("Credenciales inválidas.").build());
         }
-        session.setAttribute("user", user);
-        return ResponseEntity.ok("Login exitoso");
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+
+        String token = jwtService.generateToken(user.getEmail());
+
+        return ResponseEntity.ok(
+                AuthResponse.builder()
+                        .token(token)
+                        .email(user.getEmail())
+                        .role(user.getRole().name())
+                        .build()
+        );
     }
 
-    @Operation(summary = "Cerrar sesión actual")
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
-        session.invalidate();
-        return ResponseEntity.ok("Sesión cerrada");
+    public ResponseEntity<?> logout(Authentication authentication) {
+        String userEmail = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.ok(ApiResponse.builder()
+                .message("Sesión cerrada exitosamente" + (userEmail != null ? " para: " + userEmail : ""))
+                .build());
     }
 }

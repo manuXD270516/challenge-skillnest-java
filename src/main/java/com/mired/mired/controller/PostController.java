@@ -1,66 +1,103 @@
 package com.mired.mired.controller;
 
+import com.mired.mired.dto.ApiResponse;
 import com.mired.mired.dto.PostDto;
+import com.mired.mired.dto.PostRequest;
+import com.mired.mired.dto.PostResponse;
 import com.mired.mired.model.Post;
 import com.mired.mired.model.Role;
 import com.mired.mired.model.User;
 import com.mired.mired.security.RoleRequired;
 import com.mired.mired.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
-@Tag(name = "Publicaciones", description = "CRUD de publicaciones")
 @RestController
 @RequestMapping("/posts")
+@RequiredArgsConstructor
 public class PostController {
 
-    @Autowired
-    private PostService postService;
+    private final PostService postService;
 
-    @Operation(summary = "Crear nueva publicación (solo ADMIN)")
-    @PostMapping
-    @RoleRequired({Role.ADMIN})
-    public ResponseEntity<?> create(@Valid @RequestBody PostDto dto, HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        return ResponseEntity.ok(postService.createPost(dto, user.getEmail()));
-    }
-
-    @Operation(summary = "Obtener todas las publicaciones")
     @GetMapping
-    @RoleRequired({Role.ADMIN, Role.USER})
-    public ResponseEntity<List<Post>> getAll(HttpSession session) {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<List<PostResponse>> getAllPosts() {
+        List<Post> posts = postService.getAllPosts();
+        List<PostResponse> response = posts.stream()
+                .map(p -> PostResponse.builder()
+                        .id(p.getId())
+                        .title(p.getTitle())
+                        .category(p.getCategory())
+                        .description(p.getDescription())
+                        .imageUrl(p.getImageUrl())
+                        .build())
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Ver detalle de publicación por ID")
     @GetMapping("/{id}")
-    @RoleRequired({Role.ADMIN, Role.USER})
-    public ResponseEntity<Post> getById(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> getPostById(@PathVariable Long id) {
         Post post = postService.getPostById(id);
-        return post != null ? ResponseEntity.ok(post) : ResponseEntity.notFound().build();
+        if (post == null) {
+            return ResponseEntity.status(404).body(ApiResponse.builder().message("Publicación no encontrada").build());
+        }
+        PostResponse response = PostResponse.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .category(post.getCategory())
+                .description(post.getDescription())
+                .imageUrl(post.getImageUrl())
+                .build();
+        return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Editar publicación existente (solo ADMIN)")
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createPost(@RequestBody @Valid PostRequest request, Authentication authentication) {
+        PostDto dto = PostDto.builder()
+                .title(request.getTitle())
+                .category(request.getCategory())
+                .description(request.getDescription())
+                .imageUrl(request.getImageUrl())
+                .build();
+        postService.createPost(dto, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.builder().message("Publicación creada exitosamente.").build());
+    }
+
     @PutMapping("/{id}")
-    @RoleRequired({Role.ADMIN})
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody PostDto dto, HttpSession session) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updatePost(@PathVariable Long id,
+                                        @RequestBody @Valid PostRequest request) {
+        PostDto dto = PostDto.builder()
+                .title(request.getTitle())
+                .category(request.getCategory())
+                .description(request.getDescription())
+                .imageUrl(request.getImageUrl())
+                .build();
         Post updated = postService.updatePost(id, dto);
-        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+        if (updated == null) {
+            return ResponseEntity.status(404).body(ApiResponse.builder().message("Publicación no encontrada").build());
+        }
+        return ResponseEntity.ok(ApiResponse.builder().message("Publicación actualizada.").build());
     }
 
-    @Operation(summary = "Eliminar publicación (solo ADMIN)")
     @DeleteMapping("/{id}")
-    @RoleRequired({Role.ADMIN})
-    public ResponseEntity<String> delete(@PathVariable Long id, HttpSession session) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
-        return ResponseEntity.ok("Publicación eliminada");
+        return ResponseEntity.ok(ApiResponse.builder().message("Publicación eliminada.").build());
     }
 }

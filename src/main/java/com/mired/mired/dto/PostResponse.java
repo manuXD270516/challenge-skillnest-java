@@ -1,15 +1,13 @@
 package com.mired.mired.dto;
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostDto {
+public class PostResponse {
+    private Long id;
     private String title;
     private String category;
     private String description;
