@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #212529;
+  min-height: 100vh;
+}
+
+.container-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card-form {
+  width: 100%;
+  max-width: 400px;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-dark {
+  background-color: #000;
+  border-color: #000;
+}
+
+.btn-dark:hover {
+  background-color: #222;
+  border-color: #222;
+}
+
+.navbar {
+  padding: 1rem 2rem;
+}
+
+.navbar .nav-link {
+  font-weight: 500;
+}
+
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.publication-card {
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.card-footer {
+  background-color: #f1f1f1;
+}
+
+.alert {
+  margin-top: 1rem;
+}

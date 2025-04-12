@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./mired
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:mired_db
+    networks:
+      - mired-net
+
+  frontend:
+    build:
+      context: ./mired-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    networks:
+      - mired-net
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
+
+networks:
+  mired-net:
