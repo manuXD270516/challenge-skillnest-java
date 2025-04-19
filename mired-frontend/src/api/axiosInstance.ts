@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const baseURL =
+  typeof window !== "undefined" && (window as any).VITE_API_URL
+    ? (window as any).VITE_API_URL
+    : import.meta.env.VITE_API_URL;
+
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },

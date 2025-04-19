@@ -18,12 +18,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5173:80"
-    networks:
-      - mired-net
     environment:
-      - VITE_API_URL=http://localhost:8080/api
+      - VITE_API_URL=http://localhost:8080/
     depends_on:
       - backend
+    networks:
+      - mired-net
 
 networks:
   mired-net:
