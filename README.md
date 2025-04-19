@@ -1,6 +1,16 @@
+
 # 📱 MiRed - Red Social Web
 
 MiRed es una aplicación web tipo red social construida con un backend en **Spring Boot** y un frontend moderno en **React + Vite + TypeScript**, usando autenticación JWT y Docker para contenerización completa.
+
+---
+
+## 🚀 Demo en Producción
+
+| Componente | URL |
+|------------|-----|
+| 🌐 **Frontend** | [https://challenge-skillnest-java-production-c634.up.railway.app](https://challenge-skillnest-java-production-c634.up.railway.app) |
+| 🔧 **Backend**  | [https://challenge-skillnest-java-production.up.railway.app](https://challenge-skillnest-java-production.up.railway.app) |
 
 ---
 
@@ -23,10 +33,10 @@ my-network-challenge/
 ├── mired/                # Proyecto Spring Boot
 │   ├── src/
 │   └── Dockerfile
-├── mired-frontend/               # Proyecto Vite + React + TS
+├── mired-frontend/       # Proyecto Vite + React + TS
 │   ├── src/
 │   └── Dockerfile
-├── docker-compose.yml      # Orquestación de servicios
+├── docker-compose.yml    # Orquestación de servicios
 └── README.md
 ```
 
@@ -44,8 +54,8 @@ my-network-challenge/
 ### 1. Clonar el proyecto
 
 ```bash
-git clone https://github.com/tu-usuario/mi-red.git
-cd mi-red
+git clone https://github.com/manuXD270516/challenge-skillnest-java my-network
+cd my-network
 ```
 
 ### 2. Construir y levantar con Docker
@@ -67,7 +77,7 @@ Esto levantará:
 | Email               | Rol   | Contraseña |
 |--------------------|--------|-------------|
 | user2@mired.com    | ADMIN | user2123    |
-| user1@mired.com    |  USER | user1123    |
+| user1@mired.com    | USER  | user1123    |
 
 ---
 
@@ -102,49 +112,18 @@ Esto levantará:
 
 ---
 
-## 🐳 docker-compose.yml
+## 📬 Colección de pruebas Postman
 
-```yaml
-version: '3.9'
+Accede a la colección completa aquí:
 
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-    networks:
-      - mired-network
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:80"
-    depends_on:
-      - backend
-    networks:
-      - mired-network
-
-networks:
-  mired-network:
-    driver: bridge
-```
-
----
-
-## 🧠 Consideraciones técnicas
-
-- `axiosInstance.ts` está configurado para enrutar correctamente `/auth` y `/api` según el entorno.
-- Se usan **dos instancias de Axios** en frontend:
-  - `authInstance.ts` → para login, registro, logout.
-  - `apiInstance.ts` → para publicaciones y amistades.
+👉 [https://documenter.getpostman.com/view/2654210/2sB2cd5yUs](https://documenter.getpostman.com/view/2654210/2sB2cd5yUs)
 
 ---
 
 ## 🧪 Base de datos H2
 
 Accede a la consola de H2 en:
+
 ```
 http://localhost:8080/h2-console
 ```
